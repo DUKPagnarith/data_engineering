@@ -1,0 +1,13 @@
+# Logs
+W2/logs/
+__pycache__/
+*.pyc
+
+# Database files
+*.db
+
+# OS files
+.DS_Store
+
+# Python
+.ipynb_checkpoints/

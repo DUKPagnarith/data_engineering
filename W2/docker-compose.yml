@@ -1,0 +1,116 @@
+services:
+  # ─── PostgreSQL (Stock Data) ───
+  postgres:
+    image: postgres:15
+    container_name: w2_postgres
+    environment:
+      POSTGRES_DB: stock_db
+      POSTGRES_USER: stock_user
+      POSTGRES_PASSWORD: stockpassword
+    ports:
+      - "5433:5432"
+    volumes:
+      - w2_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U stock_user -d stock_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── PostgreSQL (Airflow Metadata) ───
+  postgres-airflow:
+    image: postgres:15
+    container_name: w2_postgres_airflow
+    environment:
+      POSTGRES_DB: airflow_db
+      POSTGRES_USER: airflow_user
+      POSTGRES_PASSWORD: airflowpassword
+    volumes:
+      - w2_pg_airflow_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U airflow_user -d airflow_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── pgAdmin ───
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: w2_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5051:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ─── Airflow (init – run once) ───
+  airflow-init:
+    image: apache/airflow:2.9.0
+    container_name: w2_airflow_init
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow_user:airflowpassword@postgres-airflow:5432/airflow_db
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: airflow
+      _AIRFLOW_WWW_USER_PASSWORD: airflow
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate &&
+        airflow users create \
+          --username airflow \
+          --firstname Air \
+          --lastname Flow \
+          --role Admin \
+          --email admin@example.com \
+          --password airflow || true
+    depends_on:
+      postgres-airflow:
+        condition: service_healthy
+
+  # ─── Airflow Webserver ───
+  airflow-webserver:
+    image: apache/airflow:2.9.0
+    container_name: w2_airflow_webserver
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow_user:airflowpassword@postgres-airflow:5432/airflow_db
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    ports:
+      - "8081:8080"
+    command: airflow webserver
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  # ─── Airflow Scheduler ───
+  airflow-scheduler:
+    image: apache/airflow:2.9.0
+    container_name: w2_airflow_scheduler
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow_user:airflowpassword@postgres-airflow:5432/airflow_db
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    command: airflow scheduler
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+volumes:
+  w2_pg_data:
+  w2_pg_airflow_data:
