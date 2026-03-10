@@ -1,5 +1,5 @@
 services:
-  # ─── PostgreSQL (Stock Data) ───
+  # ─── PostgreSQL ───
   postgres:
     image: postgres:15
     container_name: w2_postgres
@@ -13,22 +13,6 @@ services:
       - w2_pg_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U stock_user -d stock_db" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ─── PostgreSQL (Airflow Metadata) ───
-  postgres-airflow:
-    image: postgres:15
-    container_name: w2_postgres_airflow
-    environment:
-      POSTGRES_DB: airflow_db
-      POSTGRES_USER: airflow_user
-      POSTGRES_PASSWORD: airflowpassword
-    volumes:
-      - w2_pg_airflow_data:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U airflow_user -d airflow_db" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -52,7 +36,7 @@ services:
     container_name: w2_airflow_init
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow_user:airflowpassword@postgres-airflow:5432/airflow_db
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://stock_user:stockpassword@postgres:5432/stock_db
       AIRFLOW__CORE__FERNET_KEY: ''
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       _AIRFLOW_DB_MIGRATE: 'true'
@@ -72,7 +56,7 @@ services:
           --email admin@example.com \
           --password airflow || true
     depends_on:
-      postgres-airflow:
+      postgres:
         condition: service_healthy
 
   # ─── Airflow Webserver ───
@@ -81,7 +65,7 @@ services:
     container_name: w2_airflow_webserver
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow_user:airflowpassword@postgres-airflow:5432/airflow_db
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://stock_user:stockpassword@postgres:5432/stock_db
       AIRFLOW__CORE__FERNET_KEY: ''
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     ports:
@@ -100,7 +84,7 @@ services:
     container_name: w2_airflow_scheduler
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow_user:airflowpassword@postgres-airflow:5432/airflow_db
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://stock_user:stockpassword@postgres:5432/stock_db
       AIRFLOW__CORE__FERNET_KEY: ''
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     command: airflow scheduler
@@ -113,4 +97,3 @@ services:
 
 volumes:
   w2_pg_data:
-  w2_pg_airflow_data:
