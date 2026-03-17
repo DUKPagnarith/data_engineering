@@ -20,7 +20,7 @@ W2/
 | Service | Container | Port | Credentials |
 |---------|-----------|------|-------------|
 | **PostgreSQL (Stock Data)** | `w2_postgres` | `localhost:5433` | User: `stock_user` / Pass: `stockpassword` / DB: `stock_db` |
-| **PostgreSQL (Airflow)** | `w2_postgres_airflow` | internal only | User: `airflow_user` / Pass: `airflowpassword` / DB: `airflow_db` |
+| **PostgreSQL (Airflow)** | `w2_postgres_airflow` \| internal only | User: `airflow_user` / Pass: `airflowpassword` / DB: `airflow_db` |
 | **pgAdmin** | `w2_pgadmin` | `localhost:5051` | Email: `admin@admin.com` / Pass: `admin` |
 | **Airflow Webserver** | `w2_airflow_webserver` | `localhost:8081` | User: `airflow` / Pass: `airflow` |
 | **Airflow Scheduler** | `w2_airflow_scheduler` | internal only | — |

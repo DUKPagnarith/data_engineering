@@ -95,5 +95,21 @@ services:
       airflow-init:
         condition: service_completed_successfully
 
+  # ─── Streamlit Dashboard ───
+  streamlit:
+    image: python:3.11-slim
+    container_name: w2_streamlit
+    working_dir: /app
+    command: >
+      bash -c "pip install -r requirements.txt &&
+               streamlit run app.py --server.port=8501 --server.address=0.0.0.0"
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./streamlit_app:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   w2_pg_data:

@@ -1,0 +1,17 @@
+# ── Apple Stock Project (not part of weather pipeline) ──
+etl_apple_stock.ipynb
+etl_pipeline_apple_stock.ipynb
+dags/elt_apple_stock_dag.py
+
+# ── MongoDB (not part of weather pipeline) ──
+docker-compose-mongo.yml
+
+# ── Airflow logs ──
+logs/
+
+# ── Python cache ──
+__pycache__/
+*.pyc
+
+# ── macOS ──
+.DS_Store
