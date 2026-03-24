@@ -1,13 +1,20 @@
-# ── Apple Stock Project (not part of weather pipeline) ──
+# ── Weather Project (ignore) ──
+dags/etl_weather_dag.py
+streamlit_app/app.py
+
+# ── Apple Stock Project (ignore) ──
 etl_apple_stock.ipynb
 etl_pipeline_apple_stock.ipynb
 dags/elt_apple_stock_dag.py
 
-# ── MongoDB (not part of weather pipeline) ──
+# ── MongoDB (ignore) ──
 docker-compose-mongo.yml
 
 # ── Airflow logs ──
 logs/
+
+# ── Data files (keep CSV out of git) ──
+data/
 
 # ── Python cache ──
 __pycache__/
@@ -15,3 +22,7 @@ __pycache__/
 
 # ── macOS ──
 .DS_Store
+
+# ── Other non-employee files ──
+requirements.txt
+README.md

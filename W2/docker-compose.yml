@@ -17,6 +17,25 @@ services:
       timeout: 5s
       retries: 5
 
+  # ─── MySQL ───
+  mysql:
+    image: mysql:8.0
+    container_name: w2_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: employee_db
+      MYSQL_USER: employee_user
+      MYSQL_PASSWORD: employeepassword
+    ports:
+      - "3307:3306"
+    volumes:
+      - w2_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ─── pgAdmin ───
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -55,6 +74,8 @@ services:
           --role Admin \
           --email admin@example.com \
           --password airflow || true
+    volumes:
+      - ./data:/opt/airflow/data
     depends_on:
       postgres:
         condition: service_healthy
@@ -74,6 +95,7 @@ services:
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
+      - ./data:/opt/airflow/data
     depends_on:
       airflow-init:
         condition: service_completed_successfully
@@ -91,11 +113,12 @@ services:
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
+      - ./data:/opt/airflow/data
     depends_on:
       airflow-init:
         condition: service_completed_successfully
 
-  # ─── Streamlit Dashboard ───
+  # ─── Streamlit Dashboard (Weather) ───
   streamlit:
     image: python:3.11-slim
     container_name: w2_streamlit
@@ -111,5 +134,22 @@ services:
       postgres:
         condition: service_healthy
 
+  # ─── Streamlit Dashboard (Employee) ───
+  streamlit-employee:
+    image: python:3.11-slim
+    container_name: w2_streamlit_employee
+    working_dir: /app
+    command: >
+      bash -c "pip install -r requirements.txt &&
+               streamlit run employee_app.py --server.port=8503 --server.address=0.0.0.0"
+    ports:
+      - "8503:8503"
+    volumes:
+      - ./streamlit_app:/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+
 volumes:
   w2_pg_data:
+  w2_mysql_data:
